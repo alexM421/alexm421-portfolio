@@ -19,11 +19,26 @@ const updateBalls = (balls: Ball[], width: number, height: number) => {
     ball.currentPos.x += ball.speed.vx
     ball.currentPos.y += ball.speed.vy
 
-    if (ball.currentPos.x - ball.radius < 0 || ball.currentPos.x + ball.radius > width) {
+    const isBallHittingLeftWall  = ball.currentPos.x - ball.radius < 0
+    const isBallHittingRightWall = ball.currentPos.x + ball.radius > width
+    if (isBallHittingLeftWall || isBallHittingRightWall) {
       ball.speed.vx *= -1
+      if(isBallHittingLeftWall){
+        ball.currentPos.x = ball.radius
+      }if(isBallHittingRightWall){
+        ball.currentPos.x = width - ball.radius
+      }
     }
-    if (ball.currentPos.y - ball.radius < 0 || ball.currentPos.y + ball.radius > height) {
+    
+    const isBallHittingBottomWall = ball.currentPos.y + ball.radius > height
+    const isBallHittingTopWall = ball.currentPos.y - ball.radius < 0 
+    if (isBallHittingBottomWall || isBallHittingTopWall ) {
       ball.speed.vy *= -1
+      if(isBallHittingBottomWall){
+        ball.currentPos.y = height - ball.radius
+      }if(isBallHittingTopWall){
+        ball.currentPos.y = ball.radius
+      }
     }
   }
 }
