@@ -1,5 +1,6 @@
 import Hero from "./Hero/Hero";
 import Navbar from "./Navbar/Navbar";
+import Skills from "./Skills/Skills";
 
 
 export default function Home() {
@@ -7,6 +8,7 @@ export default function Home() {
     <div>
       <Navbar/>
       <Hero/>
+      <Skills/>
     </div>
   );
 }

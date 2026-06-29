@@ -6,7 +6,7 @@ import { NAVBAR_HEIGHT } from '@/constants/layout'
 const Navbar = () => {
   return (
     <div 
-      className='absolute w-screen flex bg-background justify-between items-center px-6 py-3 border-b z-10 border-[#E2E2E226]'
+      className='fixed w-full flex bg-background justify-between items-center px-6 py-3 border-b z-10 border-[#E2E2E226]'
       style={{height: `${NAVBAR_HEIGHT}px`}}
     >
         <Link href="/" className='text-accent-soft text-3xl font-bold tracking-tight'>ALEXANDRE_MILLET</Link>

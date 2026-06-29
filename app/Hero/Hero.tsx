@@ -4,7 +4,7 @@ import HeroScan from './HeroScan'
 
 const Hero = () => {
   return (
-    <div className='@container relative h-screen w-screen overflow-hidden flex flex-col justify-center items-start gap-10 pl-8 grid-gradient'>
+    <div className='@container relative h-screen w-full overflow-hidden flex flex-col justify-center items-start gap-10 pl-8 grid-gradient'>
         <div className='flex flex-col gap-2'>
             <p className='font-mono font-medium text-xl text-accent'>AVAILABLE FOR HIRE</p>
             <h1 className='font-sans font-extrabold text-white text-8xl tracking-tight'>FULLSTACK<br/><span className='text-accent'>/</span> DEVELOPER</h1>
