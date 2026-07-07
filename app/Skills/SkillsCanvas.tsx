@@ -98,16 +98,35 @@ const updateBrick  = (ctx: CanvasRenderingContext2D, brick: Brick, canvasWidth: 
     const hitTopWall = wy <= 0
     const hitBottomWall = wy >= canvasHeight
     
+    const restitution = 0.1
+
+    
     if(hitTopWall || hitRightWall || hitLeftWall || hitBottomWall){
+      //lever arm between corner and center of mass
+      const r = {
+        x: wx - brick.currentPos.x,
+        y: wy - brick.currentPos.y
+      }
+      
+      const contactVx =
+        brick.speed.vx -
+        brick.angle.vrad * r.y;
+  
+      const contactVy =
+        brick.speed.vy +
+        brick.angle.vrad * r.x;
+      
         if(hitLeftWall || hitRightWall){
-          brick.speed.vx *= -0.5
+          brick.speed.vx *= -restitution
+          brick.angle.vrad *= -0.3;
           brick.currentPos.x = hitLeftWall ? -rx  : canvasWidth - rx
         }
         if(hitTopWall || hitBottomWall){
-          brick.speed.vy *= -0.5
+          brick.speed.vy *= -restitution
+          brick.angle.vrad *= -0.3;
           brick.currentPos.y = hitTopWall ? -ry  : canvasHeight - ry
         }
-        return
+      
       }
   }
   
@@ -121,20 +140,20 @@ const testBrick: Brick = {
     height: 40
   },
   currentPos: {
-    x: 80,
+    x: 180,
     y: 150
   },
   speed: {
-    vx: -1000,
+    vx: -100,
     vy: 0
   },
   acceleration: {
     ax: 0,
-    ay: 10
+    ay: 80
   },
   angle:{
     rad: 10,
-    vrad: 10,
+    vrad: -10,
     arad: 0,
   },
   color: "#FF4F00",
