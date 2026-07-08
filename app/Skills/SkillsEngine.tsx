@@ -116,15 +116,14 @@ const SkillsEngine = ({ skillsRef }: { skillsRef: React.RefObject<HTMLDivElement
 
     const spawnInterval = window.setInterval(() => {
       if (!spawnNextBox()) window.clearInterval(spawnInterval)
-    }, SPAWN_DELAY_MS)
+      }, SPAWN_DELAY_MS)
 
-    Matter.Render.run(render)
+    // vortex — must draw in afterRender (beforeRender is cleared by Matter each frame)
 
-    const runner = Matter.Runner.create()
-    Matter.Runner.run(runner, engine)
 
-    Matter.Events.on(render, 'afterRender', () => {
+    const drawFrame = () => {
       const ctx = render.context
+
       for (const body of engine.world.bodies) {
         if (body.label === 'ground') continue
         const { x, y } = body.position
@@ -138,13 +137,21 @@ const SkillsEngine = ({ skillsRef }: { skillsRef: React.RefObject<HTMLDivElement
         ctx.fillText(body.label, 0, 2)
         ctx.restore()
       }
-    })
+    }
+
+    Matter.Events.on(render, 'afterRender', drawFrame)
+
+    Matter.Render.run(render)
+
+    const runner = Matter.Runner.create()
+    Matter.Runner.run(runner, engine)
 
     return () => {
       window.clearInterval(spawnInterval)
       canvas.removeEventListener('mouseleave', resetHover)
       Matter.Events.off(mouseConstraint, 'mousemove', updateHover)
       Matter.Events.off(mouseConstraint, 'enddrag', updateHover)
+      Matter.Events.off(render, 'afterRender', drawFrame)
       Matter.Render.stop(render)
       Matter.Runner.stop(runner)
       Matter.Engine.clear(engine)
