@@ -19,7 +19,7 @@ const createParticles = (radius: number) => {
             radius: (i / 100) * radius,
             angle: {
                 rad: 0,
-                vrad: (Math.random()+1)*radius/250+.015,
+                vrad: (Math.random()+1)*radius/250+1,
             },
             color: '#FF4F0040',
         }
@@ -29,7 +29,7 @@ const createParticles = (radius: number) => {
     return particles
 }
 
-const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, particles: Particle[], vortexRadius: number, dt: number) => {
+const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, particles: Particle[], vortexRadius: number, dt: number, variant: 'in'|'out') => {
 
     const newParticlesArray = []
 
@@ -46,22 +46,43 @@ const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, parti
         ctx.arc(x, y, 2, 0, Math.PI * 2)
         ctx.fillStyle = color
         ctx.fill()
-        
-        particle.angle.rad += vrad * dt
-        particle.radius -= (1-0.01*dt)
 
-        if(particle.radius > 1) newParticlesArray.push(particle)
-        else {
-            const newParticle = {
-                radius: vortexRadius,
-                angle: {
-                    rad: Math.random()*Math.PI*2,
-                    vrad: (Math.random()+1)*vortexRadius/250+.015,
-                },
-                color: '#FF4F0040',
+        if(variant === "in"){
+            particle.angle.rad += vrad * dt
+            particle.radius -= (100*dt)
+            
+            if(particle.radius > 3) newParticlesArray.push(particle)
+            else {
+                const newParticle = {
+                    radius: vortexRadius,
+                    angle: {
+                        rad: Math.random()*Math.PI*2,
+                        vrad: (Math.random()+1)*(250/vortexRadius)+1,
+                    },
+                    color: '#FF4F0040',
+                }
+                newParticlesArray.push(newParticle)
             }
-            newParticlesArray.push(newParticle)
+        
+        }else{
+            particle.angle.rad -= vrad * dt
+            particle.radius += (100*dt)
+            
+            if(particle.radius < vortexRadius) newParticlesArray.push(particle)
+            else {
+                const newParticle = {
+                    radius: 3,
+                    angle: {
+                        rad: Math.random()*Math.PI*2,
+                        vrad: (Math.random()+1)*(250/vortexRadius)+1,
+                    },
+                    color: '#FF4F0040',
+                }
+                newParticlesArray.push(newParticle)
+            }
         }
+        
+
     }
 
     particles.push(...newParticlesArray)
@@ -91,11 +112,12 @@ const SkillsVortex = ({ skillsRef }: { skillsRef: RefObject<HTMLDivElement | nul
         vortexCanvas.width = skillsWidth
         
         //vortex constants
-        const vortexRadius = 200
-        const vortexCx = skillsWidth/2
+        const vortexRadius = 100
+        const vortexLeftCx = skillsWidth/4
         const vortexCy = skillsHeigth/2
-        
-        const particles = createParticles(vortexRadius)
+        const vortexRightCx = 3*skillsWidth/4
+        const particlesLeftVortex = createParticles(vortexRadius)
+        const particlesRightVortex = createParticles(vortexRadius)
         
         //animate function
         let lastFrameTime: undefined | number
@@ -109,8 +131,9 @@ const SkillsVortex = ({ skillsRef }: { skillsRef: RefObject<HTMLDivElement | nul
             // fade trail
             ctx.fillStyle = 'rgba(27, 27, 27, 0.12)'
             ctx.fillRect(0, 0, skillsWidth, skillsHeigth)
-            //draw the vortex
-            drawVortex(vortexCx, vortexCy, ctx, particles, vortexRadius, dt)
+            //draw the vortexes
+            drawVortex(vortexLeftCx, vortexCy, ctx, particlesLeftVortex, vortexRadius, dt,"out")
+            drawVortex(vortexRightCx, vortexCy, ctx, particlesRightVortex, vortexRadius, dt,"in")
             
             animationId = requestAnimationFrame(animate)
         }
