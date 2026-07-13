@@ -36,4 +36,5 @@ const SkillsEngine = ({ skillsData }: { skillsData: skillsData }) => {
 
   return null
 }
+
 export default SkillsEngine

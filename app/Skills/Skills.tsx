@@ -20,7 +20,7 @@ const Skills = () => {
         {skillsData && 
           <>
             <SkillsEngine skillsData={skillsData}/>
-            {/* <SkillsVortex skillsData={skillsData}/> */}
+            <SkillsVortex skillsData={skillsData}/>
           </>
         }
     </div>
