@@ -137,8 +137,10 @@ export const setupAnimation = (ctx: CanvasRenderingContext2D, skillsData: skills
         lastFrameTime = time
     
         // fade trail
-        ctx.fillStyle = 'rgba(27, 27, 27, 0.12)'
+        ctx.globalCompositeOperation = 'destination-out'
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)'  // removes ~12% opacity per frame
         ctx.fillRect(0, 0, width, height)
+        ctx.globalCompositeOperation = 'source-over'
         //draw the vortexes
         drawVortex(vortexLCenterX, vortexCenterY, ctx, leftParticlesArr, vortexRadius, dt,"out")
         drawVortex(vortexRCenterX, vortexCenterY, ctx, rightParticlesArr, vortexRadius, dt,"in")

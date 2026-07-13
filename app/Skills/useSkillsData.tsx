@@ -41,7 +41,7 @@ const useSkillsData = (skillsRef: React.RefObject<HTMLDivElement | null>) => {
                     vortexLCenterX: container.clientWidth/4,
                     vortexRCenterX:  3*container.clientWidth/4,
                   },
-                vortexRadius: 250
+                vortexRadius: 100
             }
         })
 
