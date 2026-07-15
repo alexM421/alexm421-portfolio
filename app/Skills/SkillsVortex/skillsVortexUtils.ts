@@ -11,7 +11,8 @@ type Particle = {
         rad: number,
         vrad: number
     },
-    color: string
+    color: string,
+    countId: number
 }
 
 export const setupCanvas = (ref: React.RefObject<HTMLCanvasElement | null>, container: HTMLDivElement) => {
@@ -38,26 +39,30 @@ const getParticlesArr = (vortexRadius: number, particlesCount: number) => {
         rightParticlesArr : [],
     }
 
+    let isRightParticlesArr = false
+
     for(const particlesArr of Object.values(particlesArrays)){
 
         for (let i = 1; i <= particlesCount; i++) {
             const particle = {
-                radius: (i / particlesCount) * vortexRadius,
+                radius:  isRightParticlesArr? vortexRadius:0,
                 angle: {
-                    rad: 0,
-                    vrad: (Math.random()+1)*vortexRadius/250+1,
+                    rad: (i/particlesCount)*Math.PI*2,
+                    vrad: Math.random()*10,
                 },
                 color: '#FF4F0040',
+                countId: i,
             }
             particlesArr.push(particle)
         }
 
+        isRightParticlesArr = true
     }
 
     return particlesArrays
 }
 
-const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, particles: Particle[], vortexRadius: number, dt: number, variant: 'in'|'out') => {
+const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, particles: Particle[], vortexRadius: number, dt: number, variant: 'in'|'out', particlesCount: number) => {
     
     const newParticlesArray = []
 
@@ -66,28 +71,34 @@ const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, parti
         if(!particle) continue
     
         const { radius, angle: { rad, vrad }, color  } = particle
-    
+
         const x = cx + Math.cos(rad) * radius
         const y = cy + Math.sin(rad) * radius
+
+        const t = radius/vortexRadius
+        const alpha = variant==="in"? t:1-t  // or smooth(1 - t) for "out"
         
+        ctx.globalAlpha = alpha * 0.25  // 0.25 = your base opacity (#FF4F0040 ≈ 25%)
         ctx.beginPath()
         ctx.arc(x, y, 2, 0, Math.PI * 2)
-        ctx.fillStyle = color
+        ctx.fillStyle = '#FF4F00'       // solid orange; alpha from globalAlpha
         ctx.fill()
+        ctx.globalAlpha = 1     
 
         if(variant === "in"){
             particle.angle.rad += vrad * dt
             particle.radius -= (100*dt)
             
-            if(particle.radius > 3) newParticlesArray.push(particle)
+            if(particle.radius > 0) newParticlesArray.push(particle)
             else {
                 const newParticle = {
                     radius: vortexRadius,
                     angle: {
-                        rad: Math.random()*Math.PI*2,
-                        vrad: (Math.random()+1)*(250/vortexRadius)+1,
+                        rad: (particle.countId/particlesCount)*Math.PI*2,
+                        vrad: Math.random()*5,
                     },
                     color: '#FF4F0040',
+                    countId: particle.countId
                 }
                 newParticlesArray.push(newParticle)
             }
@@ -99,12 +110,13 @@ const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, parti
             if(particle.radius < vortexRadius) newParticlesArray.push(particle)
             else {
                 const newParticle = {
-                    radius: 3,
+                    radius: 0,
                     angle: {
-                        rad: Math.random()*Math.PI*2,
-                        vrad: (Math.random()+1)*(250/vortexRadius)+1,
+                        rad: (particle.countId/particlesCount)*Math.PI*2,
+                        vrad: Math.random()*5,
                     },
                     color: '#FF4F0040',
+                    countId: particle.countId
                 }
                 newParticlesArray.push(newParticle)
             }
@@ -142,8 +154,8 @@ export const setupAnimation = (ctx: CanvasRenderingContext2D, skillsData: skills
         ctx.fillRect(0, 0, width, height)
         ctx.globalCompositeOperation = 'source-over'
         //draw the vortexes
-        drawVortex(vortexLCenterX, vortexCenterY, ctx, leftParticlesArr, vortexRadius, dt,"out")
-        drawVortex(vortexRCenterX, vortexCenterY, ctx, rightParticlesArr, vortexRadius, dt,"in")
+        drawVortex(vortexLCenterX, vortexCenterY, ctx, leftParticlesArr, vortexRadius, dt,"out", particlesCount)
+        drawVortex(vortexRCenterX, vortexCenterY, ctx, rightParticlesArr, vortexRadius, dt,"in", particlesCount)
 
         animationId = requestAnimationFrame(animate)
     }

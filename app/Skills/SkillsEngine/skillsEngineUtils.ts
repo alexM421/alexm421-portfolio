@@ -1,5 +1,6 @@
 import Matter from "matter-js"
-import { skillsData, VortexCoordinates } from "../useSkillsData"
+import { VortexData, VortexCoordinates } from "../useSkillsData"
+import { setupPoofPreview } from "./spawnPoofEffect"
 
 
 
@@ -60,7 +61,9 @@ export const setupWalls = (
 
 export const setupBoxesSpawn = (
     vortexCoordinates: VortexCoordinates,
+    vortexRadius: VortexData['vortexRadius'],
     engine: Matter.Engine,
+    render: Matter.Render
 ) => {
 
     const BOXES_LABELS = ['HTML','CSS','Javascript','React','Node','Next.js','Typescript','Git','Express','PostgreSQL','Docker','Canvas','TailwindCSS']
@@ -69,12 +72,12 @@ export const setupBoxesSpawn = (
     //get the pending boxes
     const { vortexCenterY, vortexLCenterX } = vortexCoordinates
     
-    const boxSpawnCenterX = vortexLCenterX 
-    const boxSpawnCenterY = vortexCenterY
-
     
     const pendingBoxes = BOXES_LABELS.slice(0,1).map((label) => {
-    
+        
+        const boxSpawnCenterX = vortexLCenterX + (Math.random()*2-1)*vortexRadius 
+        const boxSpawnCenterY = vortexCenterY + (Math.random()*2-1)*vortexRadius
+        
         //Adjusts box width depending on the length of the label inside
         const labelLength = label.length
         
@@ -101,7 +104,10 @@ export const setupBoxesSpawn = (
     //spawning boxes
     const spawnNextBox = () => {
         const box = pendingBoxes.shift()
-        if (box) Matter.Composite.add(engine.world, box)
+        if (box) {
+            Matter.Composite.add(engine.world, box)
+            setupPoofPreview(render, box.position.x, box.position.y)
+        }
             return pendingBoxes.length > 0
     }
     
