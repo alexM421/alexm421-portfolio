@@ -16,7 +16,7 @@ export type PoofEffect = {
 
 export const createPoofParticle = (cx: number, cy: number): PoofEffect => {
   const poofArr: PoofPixel[] = []
-  const centerOffset = { x: Math.random()*50, y: Math.random()*20 }
+  const centerOffset = { x: (Math.random()*2-1)*80, y: (Math.random()*2-1)*40 }
   const sizeOffset = 4
   const size = Math.random() + 1
 
@@ -34,9 +34,20 @@ export const createPoofParticle = (cx: number, cy: number): PoofEffect => {
     })
   }
 
+  const shades = [
+    "#D0D0D0",
+    "#D8D8D8",
+    "#E0E0E0",
+    "#E8E8E8",
+    "#F0F0F0",
+    "#F5F5F5"
+  ];
+  
+  const color = shades[Math.floor(Math.random() * shades.length)];
+
   return {
     poofArr,
-    color: '#EEEEEE',
+    color: color,
     size,
     vx: Math.random()*40-20,
     vy: Math.random()*40-20,
@@ -55,13 +66,13 @@ export const drawPoof = (ctx: CanvasRenderingContext2D, poof: PoofEffect) => {
   }
 }
 
-const updatePoof = (poof: PoofEffect, dt: number, hasSecondElapsed: boolean) => {
+const updatePoof = (poof: PoofEffect, dt: number, hasTimeElasped: boolean) => {
 
     for(const pixel of poof.poofArr){
         if(!pixel.draw) continue
         pixel.x += poof.vx * dt/1000
         pixel.y += poof.vy * dt/1000
-        if(hasSecondElapsed) pixel.draw = Math.random() > 0.5
+        if(hasTimeElasped) pixel.draw = Math.random() > 0.5
     }
 }
 
@@ -72,13 +83,14 @@ export const setupPoofPreview = (
   cy: number,
 ) => {
   const poofParticlesArray = [...Array(30)].map(() => createPoofParticle(cx, cy))
+  const POOF_NEXT_FRAME_DELAY = 0.15
   let lastTime: number | undefined
   let poofTimer = performance.now()
 
   const draw = () => {
     const now = performance.now()
     const dt = lastTime === undefined? 0: (now - lastTime)
-    const poofDt = (now-poofTimer)/1000 - 0.25
+    const poofDt = (now-poofTimer)/1000 - POOF_NEXT_FRAME_DELAY
     const hasPoofDtElapsed = poofDt > 0
     lastTime = now
     poofTimer = hasPoofDtElapsed? now:poofTimer
