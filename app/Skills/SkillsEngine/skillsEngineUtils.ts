@@ -1,6 +1,6 @@
 import Matter from "matter-js"
 import { VortexData, VortexCoordinates } from "../useSkillsData"
-import { setupPoofPreview } from "./spawnPoofEffect"
+import { setupPoofEffects } from "./spawnPoofEffect"
 
 
 
@@ -30,7 +30,7 @@ export const setupEngine = (
     canvas.style.height = '100%'
     canvas.style.background = 'transparent'
     canvas.style.pointerEvents = 'auto'
-    canvas.style.zIndex = '0'
+    canvas.style.zIndex = '10'
     
     return { engine, render }
 }
@@ -41,20 +41,42 @@ export const setupWalls = (
     height: number,
     engine: Matter.Engine
 ) => {
-    const rectangleCenterX = width/2
-    const rectangleCenterY = height
-    const rectangleWidth = width
-    const rectangleHeigth = 10
+
     
     const ground = Matter.Bodies.rectangle(
-        rectangleCenterX,
-        rectangleCenterY,
-        rectangleWidth,
-        rectangleHeigth,
+        width/2,
+        height+5,
+        width,
+        10,
         { isStatic: true, label: 'ground' }
     )
+
+    const roof = Matter.Bodies.rectangle(
+        width/2,
+        -10,
+        width,
+        10,
+        { isStatic: true, label: 'roof' }
+    )
+
+    const leftWall = Matter.Bodies.rectangle(
+        -10,
+        height/2,
+        10,
+        height,
+        { isStatic: true, label: 'leftWall' }
+    )
+
+    const rightWall = Matter.Bodies.rectangle(
+        width+10,
+        height/2,
+        10,
+        height,
+        { isStatic: true, label: 'rightWall' }
+    )
     
-    Matter.Composite.add(engine.world, [ground])
+    
+    Matter.Composite.add(engine.world, [ground, roof, leftWall, rightWall])
 }
 
 
@@ -67,13 +89,13 @@ export const setupBoxesSpawn = (
 ) => {
 
     const BOXES_LABELS = ['HTML','CSS','Javascript','React','Node','Next.js','Typescript','Git','Express','PostgreSQL','Docker','Canvas','TailwindCSS']
-    const SPAWN_DELAY_MS = 500
+    const SPAWN_DELAY_MS = 800
     
     //get the pending boxes
     const { vortexCenterY, vortexLCenterX } = vortexCoordinates
     
     
-    const pendingBoxes = BOXES_LABELS.slice(0,1).map((label) => {
+    const pendingBoxes = BOXES_LABELS.map((label) => {
         
         const boxSpawnCenterX = vortexLCenterX + (Math.random()*2-1)*vortexRadius 
         const boxSpawnCenterY = vortexCenterY + (Math.random()*2-1)*vortexRadius
@@ -101,21 +123,68 @@ export const setupBoxesSpawn = (
         ))
     })
 
+    const { triggerPoof, cleanup: cleanupPoofEffects } = setupPoofEffects(render)
+
     //spawning boxes
     const spawnNextBox = () => {
         const box = pendingBoxes.shift()
         if (box) {
             Matter.Composite.add(engine.world, box)
-            setupPoofPreview(render, box.position.x, box.position.y)
+            triggerPoof(box.position.x, box.position.y)
         }
             return pendingBoxes.length > 0
     }
-    
+
+    const canvasWidth = render.options.width ?? 0
+    const canvasHeight = render.options.height ?? 0
+    const EDGE_PADDING = 24
+
+    const fixOutsideBoxes = () => {
+        for (const body of engine.world.bodies) {
+            if (body.isStatic) continue
+
+            const { min, max } = body.bounds
+            const halfW = (max.x - min.x) / 2
+            const halfH = (max.y - min.y) / 2
+            let { x, y } = body.position
+            let moved = false
+
+            // Fully off-screen → snap back just inside the visible edge
+            if (max.x < 0) {
+                x = EDGE_PADDING + halfW
+                moved = true
+            } else if (min.x > canvasWidth) {
+                x = canvasWidth - EDGE_PADDING - halfW
+                moved = true
+            }
+
+            if (max.y < 0) {
+                y = EDGE_PADDING + halfH
+                moved = true
+            } else if (min.y > canvasHeight) {
+                y = canvasHeight - EDGE_PADDING - halfH
+                moved = true
+            }
+
+            if (!moved) continue
+
+            Matter.Body.setPosition(body, { x, y })
+            Matter.Body.setVelocity(body, { x: 0, y: 0 })
+            Matter.Body.setAngularVelocity(body, 0)
+        }
+    }
+
+    Matter.Events.on(engine, 'beforeUpdate', fixOutsideBoxes)
+  
     const spawnInterval = window.setInterval(() => {
         if (!spawnNextBox()) window.clearInterval(spawnInterval)
         }, SPAWN_DELAY_MS)
 
-    return () => window.clearInterval(spawnInterval)
+    return () => {
+        window.clearInterval(spawnInterval)
+        Matter.Events.off(engine, 'beforeUpdate', fixOutsideBoxes)
+        cleanupPoofEffects()
+    }
 }
 
 export const setupMouse = (
@@ -187,7 +256,7 @@ export const setupTextLabels = (
         const ctx = render.context
     
         for (const body of engine.world.bodies) {
-          if (body.label === 'ground') continue
+          if (['ground','roof','leftWall','rightWall'].includes(body.label)) continue
           const { x, y } = body.position
           ctx.save()
           ctx.translate(x, y)

@@ -7,6 +7,7 @@ type PoofPixel = {
 }
 
 export type PoofEffect = {
+  bornAt: number
   poofArr: PoofPixel[]
   color: string
   size: number
@@ -14,9 +15,12 @@ export type PoofEffect = {
   vy: number
 }
 
+const POOF_REROLL_INTERVAL_MS = 150
+const POOF_MAX_LIFE_MS = 1200
+
 export const createPoofParticle = (cx: number, cy: number): PoofEffect => {
   const poofArr: PoofPixel[] = []
-  const centerOffset = { x: (Math.random()*2-1)*80, y: (Math.random()*2-1)*40 }
+  const centerOffset = { x: (Math.random() * 2 - 1) * 80, y: (Math.random() * 2 - 1) * 40 }
   const sizeOffset = 4
   const size = Math.random() + 1
 
@@ -25,7 +29,7 @@ export const createPoofParticle = (cx: number, cy: number): PoofEffect => {
     const yOffset = (Math.floor(i / 8) - sizeOffset) * size
 
     const centerDistance = Math.hypot(xOffset, yOffset)
-    const p = 0.7 * (1 - (centerDistance / (4 * size)))
+    const p = 0.7 * (1 - centerDistance / (4 * size))
 
     poofArr.push({
       x: cx + xOffset + centerOffset.x,
@@ -34,23 +38,16 @@ export const createPoofParticle = (cx: number, cy: number): PoofEffect => {
     })
   }
 
-  const shades = [
-    "#D0D0D0",
-    "#D8D8D8",
-    "#E0E0E0",
-    "#E8E8E8",
-    "#F0F0F0",
-    "#F5F5F5"
-  ];
-  
-  const color = shades[Math.floor(Math.random() * shades.length)];
+  const shades = ['#D0D0D0', '#D8D8D8', '#E0E0E0', '#E8E8E8', '#F0F0F0', '#F5F5F5']
+  const color = shades[Math.floor(Math.random() * shades.length)]
 
   return {
+    bornAt: performance.now(),
     poofArr,
-    color: color,
+    color,
     size,
-    vx: Math.random()*40-20,
-    vy: Math.random()*40-20,
+    vx: Math.random() * 40 - 20,
+    vy: Math.random() * 40 - 20,
   }
 }
 
@@ -59,50 +56,88 @@ export const drawPoof = (ctx: CanvasRenderingContext2D, poof: PoofEffect) => {
 
   for (const pixel of poof.poofArr) {
     if (!pixel.draw) continue
-    const x = Math.round(pixel.x)
-    const y = Math.round(pixel.y) 
-    // +1 overlap removes hairline gaps between adjacent poof pixels
-    ctx.fillRect(x, y, poof.size + 1, poof.size + 1)
+    ctx.fillRect(
+      Math.round(pixel.x),
+      Math.round(pixel.y),
+      poof.size + 1,
+      poof.size + 1,
+    )
   }
 }
 
-const updatePoof = (poof: PoofEffect, dt: number, hasTimeElasped: boolean) => {
+const hasDrawablePixels = (poof: PoofEffect) => poof.poofArr.some((pixel) => pixel.draw)
 
-    for(const pixel of poof.poofArr){
-        if(!pixel.draw) continue
-        pixel.x += poof.vx * dt/1000
-        pixel.y += poof.vy * dt/1000
-        if(hasTimeElasped) pixel.draw = Math.random() > 0.5
-    }
+const updatePoof = (poof: PoofEffect, dtMs: number, shouldRerollDraw: boolean) => {
+  for (const pixel of poof.poofArr) {
+    if (!pixel.draw) continue
+    pixel.x += (poof.vx * dtMs) / 1000
+    pixel.y += (poof.vy * dtMs) / 1000
+    if (shouldRerollDraw) pixel.draw = Math.random() > 0.5
+  }
 }
 
-/** Temporary preview — draws one poof every frame at (cx, cy) so you can inspect the look. */
-export const setupPoofPreview = (
-  render: Matter.Render,
-  cx: number,
-  cy: number,
-) => {
-  const poofParticlesArray = [...Array(30)].map(() => createPoofParticle(cx, cy))
-  const POOF_NEXT_FRAME_DELAY = 0.15
+const isPoofExpired = (poof: PoofEffect, now: number) =>
+  now - poof.bornAt >= POOF_MAX_LIFE_MS || !hasDrawablePixels(poof)
+
+/** One shared afterRender hook — auto Events.off when nothing left to draw. */
+export const setupPoofEffects = (render: Matter.Render) => {
+  const activePoofs: PoofEffect[] = []
   let lastTime: number | undefined
-  let poofTimer = performance.now()
+  let rerollTimer = performance.now()
+  let isListening = false
 
   const draw = () => {
-    const now = performance.now()
-    const dt = lastTime === undefined? 0: (now - lastTime)
-    const poofDt = (now-poofTimer)/1000 - POOF_NEXT_FRAME_DELAY
-    const hasPoofDtElapsed = poofDt > 0
-    lastTime = now
-    poofTimer = hasPoofDtElapsed? now:poofTimer
-    
-    for(const poof of poofParticlesArray){
-        updatePoof(poof, dt, hasPoofDtElapsed)
-        drawPoof(render.context, poof)
+    if (activePoofs.length === 0) {
+      Matter.Events.off(render, 'afterRender', draw)
+      isListening = false
+      return
     }
-    
+
+    const now = performance.now()
+    const dtMs = lastTime === undefined ? 0 : now - lastTime
+    const shouldRerollDraw = now - rerollTimer >= POOF_REROLL_INTERVAL_MS
+
+    if (shouldRerollDraw) rerollTimer = now
+    lastTime = now
+
+    for (let i = activePoofs.length - 1; i >= 0; i--) {
+      const poof = activePoofs[i]
+      updatePoof(poof, dtMs, shouldRerollDraw)
+
+      if (isPoofExpired(poof, now)) {
+        activePoofs.splice(i, 1)
+        continue
+      }
+
+      drawPoof(render.context, poof)
+    }
+
+    if (activePoofs.length === 0) {
+      Matter.Events.off(render, 'afterRender', draw)
+      isListening = false
+    }
   }
 
-  Matter.Events.on(render, 'afterRender', draw)
+  const ensureListening = () => {
+    if (isListening) return
+    lastTime = undefined
+    rerollTimer = performance.now()
+    Matter.Events.on(render, 'afterRender', draw)
+    isListening = true
+  }
 
-  return () => Matter.Events.off(render, 'afterRender', draw)
+  const triggerPoof = (cx: number, cy: number, count = 30) => {
+    for (let i = 0; i < count; i++) {
+      activePoofs.push(createPoofParticle(cx, cy))
+    }
+    ensureListening()
+  }
+
+  const cleanup = () => {
+    Matter.Events.off(render, 'afterRender', draw)
+    activePoofs.length = 0
+    isListening = false
+  }
+
+  return { triggerPoof, cleanup }
 }

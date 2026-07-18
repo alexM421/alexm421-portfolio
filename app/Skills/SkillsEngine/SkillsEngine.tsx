@@ -4,7 +4,6 @@ import Matter from 'matter-js'
 import { useEffect } from 'react'
 import { skillsData } from '../useSkillsData'
 import { setupEngine, setupWalls, setupBoxesSpawn, setupMouse, setupTextLabels, startSimulation } from './skillsEngineUtils'
-import { setupPoofPreview } from './spawnPoofEffect'
 
 
 
