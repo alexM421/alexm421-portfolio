@@ -1,4 +1,5 @@
 import { skillsData } from "../useSkillsData"
+import { getRightVortexShine } from "../vortexInteraction"
 
 type ParticlesArrays = {
     leftParticlesArr: Particle[],
@@ -62,9 +63,16 @@ const getParticlesArr = (vortexRadius: number, particlesCount: number) => {
     return particlesArrays
 }
 
-const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, particles: Particle[], vortexRadius: number, dt: number, variant: 'in'|'out', particlesCount: number) => {
+const drawVortex = (cx: number, cy: number, ctx: CanvasRenderingContext2D, particles: Particle[], vortexRadius: number, dt: number, variant: 'in'|'out', particlesCount: number, shine = 0) => {
     
     const newParticlesArray = []
+
+    const strokeAlpha = 0.07 + shine * 0.55
+    ctx.beginPath()
+    ctx.arc(cx, cy, vortexRadius, 0, 2 * Math.PI)
+    ctx.strokeStyle = `rgba(238, 238, 238, ${strokeAlpha})`
+    ctx.lineWidth = 1 + shine * 2
+    ctx.stroke()
 
     while(particles.length > 0){
         const particle = particles.shift()
@@ -140,13 +148,19 @@ export const setupAnimation = (ctx: CanvasRenderingContext2D, skillsData: skills
   
     let lastFrameTime: undefined | number
     let animationId: number
+    let displayShine = 0
 
     const animate = (time: number) => {
     
 
         //converting ms to s
-        const dt = lastFrameTime===undefined? 0: (time - lastFrameTime)/1000
+        const rawDt = lastFrameTime===undefined? 0: (time - lastFrameTime)/1000
+        const dt = Math.min(rawDt, 1 / 30)
         lastFrameTime = time
+
+        // Smooth vortex stroke shine toward engine signal
+        const targetShine = getRightVortexShine()
+        displayShine += (targetShine - displayShine) * Math.min(1, dt * 8)
     
         // fade trail
         ctx.globalCompositeOperation = 'destination-out'
@@ -154,8 +168,8 @@ export const setupAnimation = (ctx: CanvasRenderingContext2D, skillsData: skills
         ctx.fillRect(0, 0, width, height)
         ctx.globalCompositeOperation = 'source-over'
         //draw the vortexes
-        drawVortex(vortexLCenterX, vortexCenterY, ctx, leftParticlesArr, vortexRadius, dt,"out", particlesCount)
-        drawVortex(vortexRCenterX, vortexCenterY, ctx, rightParticlesArr, vortexRadius, dt,"in", particlesCount)
+        // drawVortex(vortexLCenterX, vortexCenterY, ctx, leftParticlesArr, vortexRadius, dt,"out", particlesCount)
+        drawVortex(vortexRCenterX, vortexCenterY, ctx, rightParticlesArr, vortexRadius, dt,"in", particlesCount, displayShine)
 
         animationId = requestAnimationFrame(animate)
     }

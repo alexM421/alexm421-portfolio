@@ -1,6 +1,7 @@
 import Matter from "matter-js"
 import { VortexData, VortexCoordinates } from "../useSkillsData"
 import { setupPoofEffects } from "./spawnPoofEffect"
+import { setupVortexAbsorb } from "./vortexAbsorb"
 
 
 
@@ -85,7 +86,8 @@ export const setupBoxesSpawn = (
     vortexCoordinates: VortexCoordinates,
     vortexRadius: VortexData['vortexRadius'],
     engine: Matter.Engine,
-    render: Matter.Render
+    render: Matter.Render,
+    onSkillAbsorbed?: (brickLabel: string) => void,
 ) => {
 
     const BOXES_LABELS = ['HTML','CSS','Javascript','React','Node','Next.js','Typescript','Git','Express','PostgreSQL','Docker','Canvas','TailwindCSS']
@@ -124,6 +126,13 @@ export const setupBoxesSpawn = (
     })
 
     const { triggerPoof, cleanup: cleanupPoofEffects } = setupPoofEffects(render)
+    const cleanupVortexAbsorb = setupVortexAbsorb(
+        engine,
+        vortexCoordinates,
+        vortexRadius,
+        triggerPoof,
+        onSkillAbsorbed,
+    )
 
     //spawning boxes
     const spawnNextBox = () => {
@@ -183,6 +192,7 @@ export const setupBoxesSpawn = (
     return () => {
         window.clearInterval(spawnInterval)
         Matter.Events.off(engine, 'beforeUpdate', fixOutsideBoxes)
+        cleanupVortexAbsorb()
         cleanupPoofEffects()
     }
 }
@@ -199,6 +209,8 @@ export const setupMouse = (
     const mouse = Matter.Mouse.create(render.canvas)
     mouse.pixelRatio = window.devicePixelRatio ?? 1
     render.mouse = mouse
+    // Matter.Mouse calls preventDefault on wheel, which blocks page scroll
+    mouse.element.removeEventListener('wheel', mouse.mousewheel)
     
     //adding constraint
     const mouseConstraint = Matter.MouseConstraint.create(engine, {

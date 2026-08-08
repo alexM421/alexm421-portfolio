@@ -20,6 +20,28 @@ export type VortexCoordinates = skillsData['vortexData']['coordinates']
 export type VortexData = skillsData['vortexData']
 export type SkillsLayout = skillsData['skills']
 
+const VORTEX_RADIUS = 100
+
+const buildSkillsData = (container: HTMLDivElement): skillsData => {
+    const width = container.clientWidth
+    const height = container.clientHeight
+
+    return {
+        skills: {
+            container,
+            width,
+            height,
+        },
+        vortexData: {
+            coordinates: {
+                vortexCenterY: height / 2 + 60,
+                vortexLCenterX: width / 4,
+                vortexRCenterX: width - (VORTEX_RADIUS + 50),
+            },
+            vortexRadius: VORTEX_RADIUS,
+        },
+    }
+}
 
 const useSkillsData = (skillsRef: React.RefObject<HTMLDivElement | null>) => {
   
@@ -27,24 +49,34 @@ const useSkillsData = (skillsRef: React.RefObject<HTMLDivElement | null>) => {
 
     useEffect(() => {
         const container = skillsRef.current
-        if (!container) return    
+        if (!container) return
 
-        setSkillsData({
-            skills: {
-                container: container,
-                width: container.clientWidth,
-                height: container.clientHeight,
-            },
-            vortexData: {
-                coordinates: {
-                    vortexCenterY: container.clientHeight/2,
-                    vortexLCenterX: container.clientWidth/4,
-                    vortexRCenterX:  3*container.clientWidth/4,
-                  },
-                vortexRadius: 100
-            }
+        setSkillsData(buildSkillsData(container))
+
+        let frameId = 0
+        const observer = new ResizeObserver(() => {
+            cancelAnimationFrame(frameId)
+            frameId = requestAnimationFrame(() => {
+                setSkillsData((prev) => {
+                    const next = buildSkillsData(container)
+                    if (
+                        prev &&
+                        prev.skills.width === next.skills.width &&
+                        prev.skills.height === next.skills.height
+                    ) {
+                        return prev
+                    }
+                    return next
+                })
+            })
         })
 
+        observer.observe(container)
+
+        return () => {
+            cancelAnimationFrame(frameId)
+            observer.disconnect()
+        }
     }, [skillsRef])
 
     return skillsData

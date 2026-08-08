@@ -138,33 +138,51 @@ const HeroCanvas = () => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const width = window.innerWidth
-    const height = window.innerHeight - NAVBAR_HEIGHT.desktop
-    canvas.width = width
-    canvas.height = height
+    const size = {
+      width: window.innerWidth,
+      height: Math.max(1, window.innerHeight - NAVBAR_HEIGHT.desktop),
+    }
 
-    const balls: Ball[] = Array.from({ length: 100 }, () => ({
-      currentPos: { x: Math.random() * width, y: Math.random() * height },
-      speed: { vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2 },
-      radius: 2 + Math.random() * 5,
-      color: ['#E2E2E2', '#B4B5B5', '#FF4F00'][Math.floor(Math.random() * 3)],
-    }))
+    canvas.width = size.width
+    canvas.height = size.height
 
-    let animationId: number
+    const createBalls = (width: number, height: number) =>
+      Array.from({ length: 100 }, () => ({
+        currentPos: { x: Math.random() * width, y: Math.random() * height },
+        speed: { vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2 },
+        radius: 2 + Math.random() * 5,
+        color: ['#E2E2E2', '#B4B5B5', '#FF4F00'][Math.floor(Math.random() * 3)],
+      }))
+
+    let balls = createBalls(size.width, size.height)
+
+    let animationId = 0
+
+    const resize = () => {
+      size.width = window.innerWidth
+      size.height = Math.max(1, window.innerHeight - NAVBAR_HEIGHT.desktop)
+      canvas.width = size.width
+      canvas.height = size.height
+      balls = createBalls(size.width, size.height)
+    }
 
     const animate = () => {
-      ctx.clearRect(0, 0, width, height)
+      ctx.clearRect(0, 0, size.width, size.height)
 
-      updateBalls(balls, width, height)
+      updateBalls(balls, size.width, size.height)
       drawConnections(ctx, balls, CONNECTION_DISTANCE)
       drawBalls(ctx, balls)
       collisionCheck(balls)
       animationId = requestAnimationFrame(animate)
     }
 
+    window.addEventListener('resize', resize)
     animate()
 
-    return () => cancelAnimationFrame(animationId)
+    return () => {
+      window.removeEventListener('resize', resize)
+      cancelAnimationFrame(animationId)
+    }
   }, [])
 
   return (

@@ -48,3 +48,8 @@
 body {
   background: var(--background);
 }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 64px;
+}

@@ -10,7 +10,7 @@ const Hero = () => {
             <h1 className='font-sans font-extrabold text-white text-8xl tracking-tight'>FULLSTACK<br/><span className='text-accent'>/</span> DEVELOPER</h1>
         </div>
         <div className='flex flex-row-reverse items-center gap-4'>
-            <h3 className='font-mono font-medium text-accent-soft text-xl'>ENGINEERING ROBUST DIGITAL SOLUTIONS WITH MATHEMATICAL PRECISION.</h3>
+            <h3 className='font-mono font-medium text-accent-soft text-xl'>ENGINEERING ROBUST DIGITAL SOLUTIONS WITH PRECISION AND PURPOSE.</h3>
             <div className='w-20 h-0.5 bg-accent'></div>
         </div>
         <HeroCanvas/>
