@@ -30,7 +30,7 @@ const SkillsCard = ({ icon, number, title, skills }: SkillsCardType) => {
         />
         <p className="font-mono font-medium text-foreground opacity-55">{`MODULE_0${number}`}</p>
       </div>
-      <p className="font-sans text-3xl font-semibold text-foreground">{title}</p>
+      <p className="font-sans text-2xl md:text-3xl font-semibold text-foreground">{title}</p>
       <div className="flex flex-col gap-6">
         {skills.map((skill) => (
           <div

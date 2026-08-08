@@ -36,7 +36,8 @@ const buildSkillsData = (container: HTMLDivElement): skillsData => {
             coordinates: {
                 vortexCenterY: height / 2 + 60,
                 vortexLCenterX: width / 4,
-                vortexRCenterX: width - (VORTEX_RADIUS + 50),
+                // Keep portal fully inside the right gutter (lg:pr-80 = 320px)
+                vortexRCenterX: width - (VORTEX_RADIUS + 80),
             },
             vortexRadius: VORTEX_RADIUS,
         },

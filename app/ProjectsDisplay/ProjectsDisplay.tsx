@@ -52,12 +52,12 @@ const ProjectsDisplay = () => {
   return (
     <div className='relative overflow-hidden flex bg-black justify-center' id='work'>
       <CursorGlow />
-      <div className='relative z-10 flex flex-col p-10 py-20 w-full max-w-400'>
-          <div className='flex flex-col mb-16'>
+      <div className='relative z-10 flex flex-col p-6 md:p-10 py-12 md:py-20 w-full max-w-400'>
+          <div className='flex flex-col mb-10 md:mb-16'>
               <p className='text-accent font-medium font-mono tracking-wide'>SELECTED WORKS</p>
-              <p className='text-foreground font-bold text-5xl'>PROJETS</p>
+              <p className='text-foreground font-bold text-4xl md:text-5xl'>PROJETS</p>
           </div>
-          <div className='flex flex-col gap-64 justify-center'>
+          <div className='flex flex-col gap-16 md:gap-32 lg:gap-64 justify-center'>
               {projects.map((project, index) => 
                   <ProjectsDisplayItem {...project} key={project.title} priority={index === 0} /> 
               )}

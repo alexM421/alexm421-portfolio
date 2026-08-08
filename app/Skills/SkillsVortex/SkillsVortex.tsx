@@ -30,7 +30,7 @@ const SkillsVortex = ({ skillsData }: { skillsData: skillsData }) => {
 
 
     return (
-        <canvas ref={vortexCanvasRef} className=" absolute inset-0 pointer-events-none"/>
+        <canvas ref={vortexCanvasRef} className="absolute inset-0 z-[2] pointer-events-none"/>
     )
 }
 

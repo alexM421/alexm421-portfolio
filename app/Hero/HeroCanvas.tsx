@@ -146,13 +146,15 @@ const HeroCanvas = () => {
     canvas.width = size.width
     canvas.height = size.height
 
-    const createBalls = (width: number, height: number) =>
-      Array.from({ length: 100 }, () => ({
+    const createBalls = (width: number, height: number) => {
+      const count = width < 768 ? 40 : 100
+      return Array.from({ length: count }, () => ({
         currentPos: { x: Math.random() * width, y: Math.random() * height },
         speed: { vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2 },
         radius: 2 + Math.random() * 5,
         color: ['#E2E2E2', '#B4B5B5', '#FF4F00'][Math.floor(Math.random() * 3)],
       }))
+    }
 
     let balls = createBalls(size.width, size.height)
 
