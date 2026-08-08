@@ -45,11 +45,13 @@
   background-image: linear-gradient(to bottom, #FF4F0000, #FF4F0040 50%, #FF4F0000)
 }
 
-body {
-  background: var(--background);
-}
-
 html {
+  color-scheme: dark;
   scroll-behavior: smooth;
   scroll-padding-top: 64px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
 }

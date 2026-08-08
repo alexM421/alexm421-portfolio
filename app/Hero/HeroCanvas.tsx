@@ -128,6 +128,19 @@ const collisionCheck = (balls: Ball[]) => {
   }
 }
 
+const clampBalls = (balls: Ball[], width: number, height: number) => {
+  for (const ball of balls) {
+    ball.currentPos.x = Math.min(
+      Math.max(ball.currentPos.x, ball.radius),
+      Math.max(ball.radius, width - ball.radius),
+    )
+    ball.currentPos.y = Math.min(
+      Math.max(ball.currentPos.y, ball.radius),
+      Math.max(ball.radius, height - ball.radius),
+    )
+  }
+}
+
 const HeroCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -161,11 +174,22 @@ const HeroCanvas = () => {
     let animationId = 0
 
     const resize = () => {
-      size.width = window.innerWidth
-      size.height = Math.max(1, window.innerHeight - NAVBAR_HEIGHT.desktop)
+      const nextWidth = window.innerWidth
+      const nextHeight = Math.max(1, window.innerHeight - NAVBAR_HEIGHT.desktop)
+      const widthChanged = Math.abs(nextWidth - size.width) > 1
+
+      size.width = nextWidth
+      size.height = nextHeight
       canvas.width = size.width
       canvas.height = size.height
-      balls = createBalls(size.width, size.height)
+
+      // Mobile URL bar show/hide fires resize with height-only changes.
+      // Only restart the field when width changes (orientation / real resize).
+      if (widthChanged) {
+        balls = createBalls(size.width, size.height)
+      } else {
+        clampBalls(balls, size.width, size.height)
+      }
     }
 
     const animate = () => {
