@@ -156,9 +156,6 @@ const HeroCanvas = () => {
       height: Math.max(1, window.innerHeight - NAVBAR_HEIGHT.desktop),
     }
 
-    canvas.width = size.width
-    canvas.height = size.height
-
     const createBalls = (width: number, height: number) => {
       const count = width < 768 ? 40 : 100
       return Array.from({ length: count }, () => ({
@@ -170,27 +167,36 @@ const HeroCanvas = () => {
     }
 
     let balls = createBalls(size.width, size.height)
-
     let animationId = 0
 
-    const resize = () => {
-      const nextWidth = window.innerWidth
-      const nextHeight = Math.max(1, window.innerHeight - NAVBAR_HEIGHT.desktop)
-      const widthChanged = Math.abs(nextWidth - size.width) > 1
-
-      size.width = nextWidth
-      size.height = nextHeight
+    const syncCanvas = (restartBalls: boolean) => {
+      size.width = window.innerWidth
+      size.height = Math.max(1, window.innerHeight - NAVBAR_HEIGHT.desktop)
+      // Setting canvas width/height clears the bitmap — only do this on real resizes
       canvas.width = size.width
       canvas.height = size.height
-
-      // Mobile URL bar show/hide fires resize with height-only changes.
-      // Only restart the field when width changes (orientation / real resize).
-      if (widthChanged) {
+      if (restartBalls) {
         balls = createBalls(size.width, size.height)
       } else {
         clampBalls(balls, size.width, size.height)
       }
     }
+
+    syncCanvas(false)
+
+    const onResize = () => {
+      // URL bar show/hide changes height (and sometimes ~1–20px width). Ignore those.
+      if (Math.abs(window.innerWidth - size.width) < 40) return
+      syncCanvas(true)
+    }
+
+    const onOrientationChange = () => {
+      // Wait for the browser to settle on the new viewport
+      window.setTimeout(() => syncCanvas(true), 150)
+    }
+
+    window.addEventListener('resize', onResize)
+    window.addEventListener('orientationchange', onOrientationChange)
 
     const animate = () => {
       ctx.clearRect(0, 0, size.width, size.height)
@@ -202,11 +208,11 @@ const HeroCanvas = () => {
       animationId = requestAnimationFrame(animate)
     }
 
-    window.addEventListener('resize', resize)
     animate()
 
     return () => {
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('orientationchange', onOrientationChange)
       cancelAnimationFrame(animationId)
     }
   }, [])
@@ -215,8 +221,8 @@ const HeroCanvas = () => {
     <canvas
       className="absolute left-0 -z-10 w-full"
       style={{
-        height: `calc(100% - ${NAVBAR_HEIGHT.desktop}px)`,
         top: `${NAVBAR_HEIGHT.desktop}px`,
+        height: `calc(100% - ${NAVBAR_HEIGHT.desktop}px)`,
       }}
       ref={canvasRef}
     />
