@@ -210,7 +210,11 @@ export const setupMouse = (
     mouse.pixelRatio = window.devicePixelRatio ?? 1
     render.mouse = mouse
     // Matter.Mouse calls preventDefault on wheel, which blocks page scroll
-    mouse.element.removeEventListener('wheel', mouse.mousewheel)
+    // mousewheel exists at runtime but is missing from @types/matter-js
+    const mouseWithWheel = mouse as Matter.Mouse & {
+      mousewheel: EventListener
+    }
+    mouseWithWheel.element.removeEventListener('wheel', mouseWithWheel.mousewheel)
     
     //adding constraint
     const mouseConstraint = Matter.MouseConstraint.create(engine, {
